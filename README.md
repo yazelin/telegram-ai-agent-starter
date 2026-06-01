@@ -4,6 +4,15 @@
 
 Build a Telegram AI assistant that can call LLMs and tools.
 
+## 繁中定位
+
+**Telegram AI Agent 入門模板** 面向台灣繁中受眾。
+
+- 主要受眾：適合想把 Telegram 變成 AI 工作入口的台灣工程師、接案者與小團隊。
+- 核心承諾：從一個 bot token 開始，做出會回覆、會呼叫工具、可部署的 AI Agent。
+- CTA 頁：https://yazelin.github.io/telegram-ai-agent-starter/
+
+
 ## Who this is for
 
 Engineers who want a deployable Telegram AI workflow bot.

@@ -1,40 +1,36 @@
-# Telegram AI Agent Starter CI Design
+# Telegram AI Agent 入門模板 CI Design
 
-## Positioning
+> English name: Telegram AI Agent Starter
 
-**Audience:** 給想把 Telegram 變成 AI 工作入口的工程師  
-**Promise:** 從一個 bot token 開始，做出會回覆、會調工具、可部署的 AI agent。  
-**Category cue:** Telegram webhook / polling / tools
+## 定位
 
-## Visual Identity
+**主要受眾：** 適合想把 Telegram 變成 AI 工作入口的台灣工程師、接案者與小團隊。  
+**核心承諾：** 從一個 bot token 開始，做出會回覆、會呼叫工具、可部署的 AI Agent。  
+**痛點切入：** 不用先研究一堆框架，先把「能跑、能部署、能接工具」的最小版本做出來。  
+**類別提示：** Telegram webhook / polling / tools
 
-- **Primary accent:** `#38bdf8`
-- **Secondary accent:** `#2563eb`
-- **Background:** `#06111f`
-- **Graphic motif:** `paper`
-- **Style:** dark developer-tool landing page, technical grid, luminous product glyph, high-contrast CTA.
+## 視覺識別
 
-## Palette
+- **主色：** `#38bdf8`
+- **輔色：** `#2563eb`
+- **背景：** `#06111f`
+- **語言策略：** 繁體中文為主，英文產品名作為輔助與 SEO。
+- **風格：** dark developer-tool landing page、技術網格、明確產品 glyph、高對比 CTA。
 
-- `#38bdf8`
-- `#2563eb`
-- `#0f172a`
-- `#e0f2fe`
+## Landing Page CTA
 
-## Typography
+主要 CTA：**取得 Telegram AI Agent 教學筆記**  
+表單會帶上 repo 名稱 `telegram-ai-agent-starter` 與語言 `zh-Hant-TW`，方便後續分眾。
 
-- Display/UI: Inter
-- Technical labels/code: JetBrains Mono
-- Headline: large, tight tracking, high contrast
-- CTA and labels: bold, concise, action-oriented
+## 功能賣點
+
+- Webhook + polling 雙模式，開發與部署都能用
+- Claude CLI / Gemini CLI / HTTP provider adapter
+- Telegram 使用者 allow-list，避免陌生人亂用
+- 內建 /ask 與 /tool 範例，適合延伸成個人助理
 
 ## Assets
 
-- `assets/banner.svg`: Open Graph / README / hero banner
-- `assets/logo.svg`: square product mark
-- `index.html`: GitHub Pages CTA landing page
-
-## CTA Strategy
-
-Primary CTA collects email through FormSubmit and tags submission with `telegram-ai-agent-starter`.
-Secondary CTA sends users to GitHub repo/template.
+- `assets/banner.svg`：README / Open Graph / hero banner
+- `assets/logo.svg`：square product mark
+- `index.html`：繁中 GitHub Pages CTA landing page
