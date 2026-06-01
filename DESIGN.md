@@ -25,9 +25,10 @@
 ## 功能賣點
 
 - Webhook + polling 雙模式，開發與部署都能用
-- Claude CLI / Gemini CLI / HTTP provider adapter
+- echo / Claude CLI / Gemini CLI / HTTP provider adapter
+- HTTP（OpenAI-compatible）模式內建 function-calling 迴圈：agent 會自己呼叫工具並把結果接回對話；其他 provider 為純 chat
 - Telegram 使用者 allow-list，避免陌生人亂用
-- 內建 /ask 與 /tool 範例，適合延伸成個人助理
+- 內建 /ask 與手動 /tool 範例，適合延伸成個人助理
 
 ## Assets
 

@@ -8,7 +8,11 @@ async def handle_update(update):
     if not chat_id or not text: return
     if ALLOWED_USER_IDS and user_id not in ALLOWED_USER_IDS: return await send_message(chat_id,"Not allowed.")
     if text.startswith("/start"): reply="Hi! Use /ask or /tool time."
-    elif text.startswith("/tool"): reply=await run_tool((text.split(maxsplit=1)+["help"])[1])
+    elif text.startswith("/tool"):
+        parts=text.split(maxsplit=2)  # ["/tool", NAME, REST...]
+        name=parts[1] if len(parts)>1 else "help"
+        arguments={"input":parts[2]} if len(parts)>2 else {}
+        reply=await run_tool(name, arguments)
     else: reply=await ask_ai(text.removeprefix("/ask").strip())
     await send_message(chat_id, reply[:3900])
 async def send_message(chat_id,text):

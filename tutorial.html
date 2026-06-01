@@ -81,15 +81,15 @@ curl http://127.0.0.1:8000/health
 <li>app/polling.py：本機開發用 getUpdates polling</li>
 <li>app/telegram.py：解析 Telegram update、權限檢查、送訊息</li>
 <li>app/agent.py：AI provider adapter，支援 echo / claude-cli / gemini-cli / http</li>
-<li>app/tools.py：/tool time 等工具指令</li>
+<li>app/tools.py：TOOL_SCHEMAS 與 run_tool(name, arguments) dispatch，提供 time / help 工具</li>
 </ul>
 <h3>資料流</h3>
 <ol>
-<li>使用者或 client 發出請求。</li>
-<li>FastAPI / stdio 入口接收資料。</li>
-<li>handler 解析訊息與設定。</li>
-<li>adapter / tool / search 層執行實際工作。</li>
-<li>回傳最小可理解的結果。</li>
+<li>Telegram 送訊息進來：webhook（POST /webhook/telegram）或本機 polling（python -m app.polling，getUpdates + offset）。</li>
+<li>handle_update 解析 update、做 allow-list 權限檢查。</li>
+<li>/tool 指令直接呼叫 run_tool；其餘文字交給 ask_ai 依 AI_PROVIDER 路由。</li>
+<li>http 模式會把對話加上 tools=TOOL_SCHEMAS 送出，若回傳 tool_calls 就執行工具、把結果以 role:"tool" 接回去，最多迴圈 4 次直到產生最終文字（其他 provider 為純 chat）。</li>
+<li>用 sendMessage 把回覆送回 Telegram。</li>
 </ol>
 <h3>設計原則</h3>
 <ul>

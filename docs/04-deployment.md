@@ -14,6 +14,26 @@
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+## 設定 webhook
+
+部署到有公開 HTTPS 網址後，告訴 Telegram 把 update 推到你的 `/webhook/telegram`：
+
+```bash
+curl -F "url=https://YOUR_DOMAIN/webhook/telegram" \
+  "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"
+```
+
+回傳 `{"ok":true,...}` 即設定成功。要清掉改回本機開發時用 polling，可呼叫 `deleteWebhook`：
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/deleteWebhook"
+```
+
+## Webhook vs Polling
+
+- **Webhook（正式部署）**：Telegram 主動把 update POST 到 `/webhook/telegram`（app/main.py）。需要公開 HTTPS 網址，省資源、低延遲。設定完 webhook 後 **不要**同時跑 polling，否則會搶 update。
+- **Polling（本機開發）**：`python -m app.polling` 用 getUpdates + offset 主動拉，不需公開網址，適合本機 debug。切到 polling 前記得先 `deleteWebhook`。
+
 ## 常見部署選項
 
 - Render / Railway / Fly.io：適合快速 demo。
