@@ -20,6 +20,21 @@ TOOL_SCHEMAS = [
             "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "add",
+            "description": "Add two numbers and return the sum.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {"type": "number", "description": "First addend."},
+                    "b": {"type": "number", "description": "Second addend."},
+                },
+                "required": ["a", "b"],
+            },
+        },
+    },
 ]
 
 
@@ -31,4 +46,9 @@ async def run_tool(name: str, arguments: dict | None = None) -> str:
         return datetime.now().astimezone().isoformat(timespec="seconds")
     if name == "help":
         return "Try /ask your question or /tool time"
+    if name == "add":
+        try:
+            return str(float(arguments["a"]) + float(arguments["b"]))
+        except (KeyError, TypeError, ValueError):
+            return "add needs numeric arguments a and b"
     return f"Unknown tool: {name}"
