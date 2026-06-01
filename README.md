@@ -29,9 +29,10 @@ Engineers who want a deployable Telegram AI workflow bot.
 
 ## Features
 
-- FastAPI webhook + polling dev mode
-- Echo / Claude CLI / Gemini CLI / HTTP provider adapters
-- Allow-list user IDs and simple tool router
+- FastAPI webhook（`POST /webhook/telegram`）+ polling dev mode（`python -m app.polling`，含錯誤退避）
+- 四種 `AI_PROVIDER`：`echo`（離線純對話）/ `claude-cli` / `gemini-cli`（純對話）/ `http`（OpenAI-compatible）
+- **真正的 tool-calling agent 迴圈（僅 `http` 模式）**：把 `tools=` 送給 LLM，模型自己決定呼叫 `app/tools.py` 的工具，結果接回對話再產生最終答案；其他三種 provider 為純 chat
+- 手動 `/tool time` 指令隨時可用；Allow-list user IDs 擋陌生人
 - Docker-ready starter for workshops
 
 ## Quick start
@@ -64,3 +65,25 @@ MIT
 - CI spec: [DESIGN.md](DESIGN.md)
 - Banner: [assets/banner.svg](assets/banner.svg)
 - Logo: [assets/logo.svg](assets/logo.svg)
+
+---
+## 關於作者
+
+這個範本由 **林亞澤（Yaze Lin）** 維護 — 出身機電自動化系統整合，現在把同一套工程方法用在 AI 產品上。
+
+- 任職於 **擎添工業 ChingTech**（1984 年成立的機電自動化公司：PLC 程式、機械手臂、AGV 無人搬運、半導體封測／PCB／面板／光學產線整合）。
+- 技術筆記與更多範例：[yazelin.github.io](https://yazelin.github.io) · GitHub [@yazelin](https://github.com/yazelin)
+
+## 從範本到正式產品
+
+> 把「會自己呼叫工具的 agent」做到正式產品這條線，我們做成了 AgentOS 與 Mori Desktop。
+
+如果你想看同樣的想法做成正式、上線中的產品：
+
+- **CTOS** — 企業 AI 工作平台：macOS 風格 Web 桌面、知識庫 RAG 檢索、產業專屬 Agent、LINE Bot 整合，資料留在台灣。[ching-tech.com](https://ching-tech.com) · [品牌站](https://ching-tech.github.io)
+- **CTOS-Lite / CT JINN** — 把公司裝進 LINE 的個人版 AI 助理，加 LINE 即可試用：[@285fjkky](https://line.me/R/ti/p/@285fjkky)
+- **Mori Desktop** — 個人 AI 管家桌面應用（Tauri 2 + Rust + React）：[github.com/yazelin/mori-desktop](https://github.com/yazelin/mori-desktop)
+- **AgentOS** — 跨 CLI 的 agent 治理平台（開發中）
+
+> 想把這個範本落地成你公司的內部系統，或想上一堂從 0 到部署的課？
+> 來信 yazelin@ching-tech.com，或追蹤上面的連結。

@@ -5,16 +5,18 @@
 - app/main.py：FastAPI webhook 入口
 - app/polling.py：本機開發用 getUpdates polling
 - app/telegram.py：解析 Telegram update、權限檢查、送訊息
-- app/agent.py：AI provider adapter，支援 echo / claude-cli / gemini-cli / http
-- app/tools.py：/tool time 等工具指令
+- app/agent.py：AI provider adapter，支援 echo / claude-cli / gemini-cli / http；`http` 模式內建 OpenAI-compatible function-calling 迴圈
+- app/tools.py：`TOOL_SCHEMAS`（OpenAI 工具 schema）與 `run_tool(name, arguments)` dispatch，目前提供 `time` / `help`
 
 ## 資料流
 
-1. 使用者或 client 發出請求。
-2. FastAPI / stdio 入口接收資料。
-3. handler 解析訊息與設定。
-4. adapter / tool / search 層執行實際工作。
-5. 回傳最小可理解的結果。
+1. Telegram 把訊息送進來，有兩種入口：
+   - Webhook：`POST /webhook/telegram`（app/main.py，FastAPI）
+   - Long-poll：`python -m app.polling` 用 getUpdates + offset 拉更新（本機開發用）
+2. `handle_update`（app/telegram.py）解析 update、做 allow-list 權限檢查。
+3. 指令分流：`/tool NAME` 直接呼叫 `run_tool`；其餘文字交給 `ask_ai`。
+4. `ask_ai`（app/agent.py）依 `AI_PROVIDER` 路由；`http` 模式會把對話加上 `tools=TOOL_SCHEMAS` 送到 `/chat/completions`，若回傳 `tool_calls` 就執行對應工具、把結果以 `role:"tool"` 訊息接回去，最多迴圈 4 次直到模型給出最終文字。
+5. 用 sendMessage 把回覆送回 Telegram。
 
 ## 設計原則
 

@@ -27,6 +27,17 @@ cp .env.example .env
 python -m app.polling
 ```
 
+## AI_PROVIDER 選項
+
+`.env` 的 `AI_PROVIDER` 決定 `/ask` 怎麼回答，有效值：
+
+- `echo`：純回聲，不需任何金鑰，適合離線 demo（**不會**呼叫工具）。
+- `http`：OpenAI-compatible `/chat/completions` endpoint（OpenAI、本機 vLLM、Ollama 相容層等）。**唯一支援 tool-calling 的模式**：模型可自行決定呼叫 app/tools.py 裡的 `time` / `help` 工具，結果會接回對話再產生最終答案。需設定 `HTTP_LLM_ENDPOINT`、`HTTP_LLM_API_KEY`、`MODEL_NAME`。
+- `claude-cli`：呼叫本機 `claude -p`，純對話（**不會**自動呼叫工具）。
+- `gemini-cli`：呼叫本機 `gemini -p`，純對話（**不會**自動呼叫工具）。
+
+不論哪種模式，手動 `/tool time`、`/tool help` 指令都可用。
+
 ## 健康檢查
 
 ```bash
