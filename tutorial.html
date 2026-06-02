@@ -25,55 +25,69 @@
 <li>付費工作坊：手把手解問題、看你的程式與設定、一起改成你的使用場景。</li>
 <li>企業顧問：需求訪談、PoC、部署、權限、安全與維運規劃。</li>
 </ul></section><section><h2>Telegram AI Agent 入門模板：快速開始</h2>
+<p>這一段帶你「不靠任何 token」就把程式跑起來、看到真實輸出，最後再說明需要 Telegram / LLM 金鑰才能做的那幾步（會明確標註<strong>需金鑰</strong>）。</p>
 <h3>前置需求</h3>
 <ul>
-<li>Python 3.10+</li>
-<li>Git</li>
-<li>可以使用終端機</li>
-<li>如果要接真實 AI 或平台 token，請準備對應帳號與 API key。</li>
+<li>Python 3.10+（本文用 3.12.3 實測）</li>
+<li>Git、終端機</li>
+<li>想接真實 Telegram / LLM 時，才需要對應帳號與 API key。</li>
 </ul>
-<h3>最短路徑</h3>
-<ol>
-<li>建立 Telegram bot 並取得 TELEGRAM_BOT_TOKEN</li>
-<li>設定 ALLOWED_USER_IDS 避免陌生人亂用</li>
-<li>本機用 polling 模式開發</li>
-<li>部署後切換 webhook 模式</li>
-</ol>
-<h3>安裝與啟動</h3>
-<pre><code>
-git clone https://github.com/yazelin/telegram-ai-agent-starter.git
-
+<h3>第一步：安裝（不需任何 token）</h3>
+<pre><code>git clone https://github.com/yazelin/telegram-ai-agent-starter.git
 cd telegram-ai-agent-starter
-
 python -m venv .venv
-
 source .venv/bin/activate
-
 pip install -r requirements.txt
+cp .env.example .env</code></pre>
+<p>成功的話 <code>pip install</code> 最後一行會是 <code>Successfully installed ... fastapi-0.115.6 ... uvicorn-0.34.0 ...</code>，沒有紅色 ERROR。</p>
+<h3>第二步：啟動服務並做健康檢查（不需任何 token）</h3>
+<pre><code>uvicorn app.main:app --host 127.0.0.1 --port 8000</code></pre>
+<p>啟動成功會看到：</p>
+<pre><code>INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)</code></pre>
+<p>另開終端機打健康檢查：</p>
+<pre><code>curl http://127.0.0.1:8000/health</code></pre>
+<p>真實輸出：</p>
+<pre><code>{"ok":true}</code></pre>
+<p>這代表服務活著、<code>/health</code> 與 <code>/webhook/telegram</code> 兩個 endpoint 都已掛載。</p>
+<h3>第三步：用 echo provider 跑一次對話邏輯（不需任何 token）</h3>
+<p><code>.env</code> 預設 <code>AI_PROVIDER=echo</code>，純回聲、不需金鑰。把下面存成 repo 外的 <code>/tmp/try_echo.py</code>：</p>
+<pre><code>import asyncio
+from app.agent import ask_ai
+from app.tools import run_tool
 
-cp .env.example .env
+async def main():
+    print("ask_ai echo:", repr(await ask_ai("hello from a learner")))
+    print("run_tool time:", repr(await run_tool("time")))
+    print("run_tool help:", repr(await run_tool("help")))
 
-# 編輯 .env：TELEGRAM_BOT_TOKEN、ALLOWED_USER_IDS、AI_PROVIDER
-
-python -m app.polling
-
-</code></pre>
-<h3>健康檢查</h3>
-<pre><code>
-curl http://127.0.0.1:8000/health
-
-</code></pre>
-<h3>常用入口</h3>
+asyncio.run(main())</code></pre>
+<p>在 repo 根目錄跑 <code>AI_PROVIDER=echo python /tmp/try_echo.py</code>，真實輸出：</p>
+<pre><code>ask_ai echo: 'Echo: hello from a learner'
+run_tool time: '2026-06-02T03:30:19+08:00'
+run_tool help: 'Try /ask your question or /tool time'</code></pre>
+<p>到這裡程式邏輯已完整跑通，完全不需任何外部帳號。注意 <code>echo</code> / <code>claude-cli</code> / <code>gemini-cli</code> 都是純對話，不會呼叫工具；只有 <code>http</code> 會 tool-calling。</p>
+<h3>AI_PROVIDER 選項</h3>
 <ul>
-<li>GET /health：健康檢查</li>
-<li>POST /webhook/telegram：Telegram webhook 收 update</li>
+<li><code>echo</code>：純回聲，不需金鑰，不呼叫工具。</li>
+<li><code>http</code>：OpenAI-compatible <code>/chat/completions</code>，唯一支援 tool-calling 的模式（需 HTTP_LLM_ENDPOINT / HTTP_LLM_API_KEY / MODEL_NAME）。</li>
+<li><code>claude-cli</code> / <code>gemini-cli</code>：本機 CLI 純對話，不呼叫工具。</li>
 </ul>
+<h3>第四步：接真實 Telegram（需金鑰）</h3>
+<ol>
+<li>跟 <code>@BotFather</code> 申請 bot：傳 <code>/newbot</code> 取名，拿到 <code>TELEGRAM_BOT_TOKEN</code>。</li>
+<li>用 <code>@userinfobot</code> 查到自己的數字 user id。</li>
+<li>填進 <code>.env</code> 的 <code>TELEGRAM_BOT_TOKEN</code> 與 <code>ALLOWED_USER_IDS</code>（allow-list，只有列入者能用，其他人收到 <code>Not allowed.</code>）。</li>
+<li>本機用 polling 啟動（不需公開網址）：<code>python -m app.polling</code>。設好 token 後對 bot 傳 <code>/ask hello</code> 會回 <code>Echo: hello</code>。（此步需真實 token，未貼造假輸出。）</li>
+</ol>
+<h3>第五步：部署後切換 webhook（需金鑰 + 公開 HTTPS）</h3>
+<p>webhook 需要對外 HTTPS 網址，部署後用 <code>setWebhook</code> 告訴 Telegram，詳見部署筆記。</p>
 <h3>第一次成功的標準</h3>
 <ul>
-<li>服務能啟動</li>
-<li>基本 endpoint 有回應</li>
-<li>範例流程能跑通</li>
-<li>秘密 token 沒有 commit 到 GitHub</li>
+<li><code>pip install</code> 無 ERROR。</li>
+<li><code>curl /health</code> 回 <code>{"ok":true}</code>。</li>
+<li>echo driver 印出 <code>Echo: ...</code> 與 time 工具的時間字串。</li>
+<li><code>TELEGRAM_BOT_TOKEN</code> 在 <code>.env</code> 裡、沒有 commit 到 GitHub。</li>
 </ul></section><section><h2>Telegram AI Agent 入門模板：架構說明</h2>
 <h3>核心檔案</h3>
 <ul>
@@ -81,7 +95,7 @@ curl http://127.0.0.1:8000/health
 <li>app/polling.py：本機開發用 getUpdates polling</li>
 <li>app/telegram.py：解析 Telegram update、權限檢查、送訊息</li>
 <li>app/agent.py：AI provider adapter，支援 echo / claude-cli / gemini-cli / http</li>
-<li>app/tools.py：TOOL_SCHEMAS 與 run_tool(name, arguments) dispatch，提供 time / help 工具</li>
+<li>app/tools.py：TOOL_SCHEMAS（OpenAI 工具 schema）與 run_tool(name, arguments) dispatch，提供 time / help / add 工具</li>
 </ul>
 <h3>資料流</h3>
 <ol>
@@ -97,27 +111,57 @@ curl http://127.0.0.1:8000/health
 <li>token 與 secrets 全部放在環境變數。</li>
 <li>每一層保持可以替換：入口、AI provider、資料來源、部署方式。</li>
 <li>範例程式刻意保持小，方便你看懂後改成自己的版本。</li>
-</ul></section><section><h2>Telegram AI Agent 入門模板：完整操作流程</h2>
-<h3>步驟</h3>
-<ol>
-<li>先用 AI_PROVIDER=echo 確認 Telegram 收發訊息正常。</li>
-<li>確認自己的 Telegram user id 已放進 ALLOWED_USER_IDS。</li>
-<li>用 python -m app.polling 測本機互動，避免一開始處理 webhook HTTPS 問題。</li>
-<li>改成 claude-cli、gemini-cli 或 http provider。</li>
-<li>部署後把公開網址設定成 Telegram webhook。</li>
-<li>把常用腳本或 API 包進 app/tools.py，變成自己的工作流助理。</li>
-</ol>
-<h3>建議紀錄</h3>
+</ul></section><section><h2>Telegram AI Agent 入門模板：帶你走一遍</h2>
+<p>這一段帶你把「一個會自己呼叫工具的 agent」實際跑出來看到。最重要的是中段那一節：用本機模擬完整重現 tool-calling 迴圈。</p>
+<h3>哪種 provider 會呼叫工具？</h3>
 <ul>
-<li>你使用的 Python 版本</li>
-<li>啟動指令</li>
-<li>`.env` 裡有哪些 key 已設定；不要貼出 secret 值</li>
-<li>webhook / endpoint URL</li>
-<li>錯誤訊息完整內容</li>
-<li>你預期發生什麼、實際發生什麼</li>
+<li><code>echo</code> / <code>claude-cli</code> / <code>gemini-cli</code>：純對話，<strong>不</strong>送 tools=，不會呼叫工具。</li>
+<li><code>http</code>：OpenAI-compatible，<strong>會</strong>把 tools=TOOL_SCHEMAS 一起送出，讓模型自行決定呼叫工具。以下示範針對 http。</li>
 </ul>
-<h3>下一個里程碑</h3>
-<p>完成最小流程後，不要急著加功能。先找一個真實情境，讓這個 starter 解決一個很小但明確的問題。</p></section><section><h2>Telegram AI Agent 入門模板：部署筆記</h2>
+<h3>重點：完整看一次 tool-calling 迴圈（本機模擬）</h3>
+<p>我們用本機模擬：用假的 <code>httpx.AsyncClient</code> 取代真網路，讓它第一次回「要呼叫 time 工具」、第二次回最終答案。<code>app/agent.py</code> 的迴圈邏輯完全沒改，所以執行路徑就是真實那一條。<strong>以下為本機模擬，非真實外部 LLM 回應</strong>：模型回什麼由腳本指定，但「送出去的內容、工具的執行、結果如何接回」全是程式真的跑出來的。</p>
+<p>把 mock 腳本（指定模型第一次要求 time、第二次回答）存在 repo 外，在 repo 根目錄跑 <code>PYTHONPATH=. python /tmp/mock_toolloop.py</code>，真實輸出：</p>
+<pre><code>--- HTTP POST #1 -&gt; https://mock.local/v1/chat/completions
+    messages sent:
+       {'role': 'user', 'content': '現在幾點？'}
+    tools= sent: yes (time, help)
+    &gt;&gt;&gt; run_tool('time', {}) executed -&gt; '2026-06-02T03:30:53+08:00'
+--- HTTP POST #2 -&gt; https://mock.local/v1/chat/completions
+    messages sent:
+       {'role': 'user', 'content': '現在幾點？'}
+       {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_001', 'type': 'function', 'function': {'name': 'time', 'arguments': '{}'}}]}
+       {'role': 'tool', 'tool_call_id': 'call_001', 'name': 'time', 'content': '2026-06-02T03:30:53+08:00'}
+    tools= sent: yes (time, help)
+=== FINAL ANSWER ===
+現在時間是 2026-06-02T03:30（由 time 工具取得）。</code></pre>
+<p>逐格看懂（對照 <code>run_http_agent</code>）：第 1 次 POST 帶 tools= 但模型回的是 tool_calls；程式用 <code>run_tool("time", {})</code> 真的算出時間；把結果以 <code>role:"tool"</code>（帶相同 tool_call_id）接回；第 2 次 POST 模型才給最終文字。這就是「agent 會自己呼叫工具」的本體：模型決定、程式執行、結果回灌、模型總結（最多 4 次）。</p>
+<h3>動手練習：自己加一個工具，讓 agent 會呼叫它</h3>
+<p>目標：新增 <code>add(a, b)</code> 加法工具，並用同一套模擬證明 agent 真的會呼叫它（本文已實跑驗證）。</p>
+<p><strong>before：</strong><code>app/tools.py</code> 只有 time / help。<strong>after：</strong>在 <code>TOOL_SCHEMAS</code> 末尾加 add 的 schema（描述參數 a、b），並在 <code>run_tool</code> 加一條分支：</p>
+<pre><code>if name == "add":
+    try:
+        return str(float(arguments["a"]) + float(arguments["b"]))
+    except (KeyError, TypeError, ValueError):
+        return "add needs numeric arguments a and b"</code></pre>
+<p>先單獨驗證工具本身（不需金鑰），真實輸出：</p>
+<pre><code>direct add: '42.0'
+add missing: 'add needs numeric arguments a and b'</code></pre>
+<p>再用 mock 證明 agent 會自己呼叫 add（<strong>本機模擬，非真實外部 LLM 回應</strong>），真實輸出：</p>
+<pre><code>Tools now exposed to the model: ['time', 'help', 'add']
+--- HTTP POST #1
+       {'role': 'user', 'content': '19 加 23 是多少？'}
+    &gt;&gt;&gt; run_tool('add', {'a': 19, 'b': 23}) -&gt; '42.0'
+--- HTTP POST #2
+       {'role': 'user', 'content': '19 加 23 是多少？'}
+       {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_add_1', 'type': 'function', 'function': {'name': 'add', 'arguments': '{"a": 19, "b": 23}'}}]}
+       {'role': 'tool', 'tool_call_id': 'call_add_1', 'name': 'add', 'content': '42.0'}
+19 加 23 等於 42（由 add 工具計算）。</code></pre>
+<p>第一行證明新工具已送進 tools=、模型看得到它。加工具的完整套路就是：<strong>schema 進 TOOL_SCHEMAS + dispatch 進 run_tool</strong>，兩處對齊 name 即可。把 add 換成「查庫存」「叫 AGV」「打公司 API」邏輯一樣。</p>
+<h3>提醒</h3>
+<ul>
+<li><code>/tool add ...</code> 手動指令目前只會把參數打包成 <code>{"input": ...}</code>，不會自動拆成 a / b。要餵 a / b 走 http provider 讓模型產生 JSON arguments 才自然。</li>
+<li>name 在 schema 和 run_tool 要一致，否則會落到 <code>Unknown tool:</code>。</li>
+</ul></section><section><h2>Telegram AI Agent 入門模板：部署筆記</h2>
 <h3>部署前檢查</h3>
 <ul>
 <li>本機流程已經跑通。</li>
@@ -127,10 +171,14 @@ curl http://127.0.0.1:8000/health
 <li>外部服務 token 已放在部署平台 secrets。</li>
 </ul>
 <h3>啟動指令</h3>
-<pre><code>
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-</code></pre>
+<pre><code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code></pre>
+<h3>設定 webhook</h3>
+<p>部署到有公開 HTTPS 網址後，告訴 Telegram 把 update 推到 <code>/webhook/telegram</code>：</p>
+<pre><code>curl -F "url=https://YOUR_DOMAIN/webhook/telegram" \
+  "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"</code></pre>
+<p>回傳 <code>{"ok":true,...}</code> 即成功。要改回本機 polling 開發，先 <code>deleteWebhook</code>：</p>
+<pre><code>curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/deleteWebhook"</code></pre>
+<p>注意：設定 webhook 後<strong>不要</strong>同時跑 polling，否則會互搶 update。</p>
 <h3>常見部署選項</h3>
 <ul>
 <li>Render / Railway / Fly.io：適合快速 demo。</li>
@@ -146,31 +194,37 @@ curl http://127.0.0.1:8000/health
 <p>接著再測真正的業務流程，不要只看服務有沒有啟動。</p>
 <h3>實務提醒</h3>
 <p>部署不是最後一步。正式使用前至少要補：log、錯誤告警、權限控管、備份策略、secret rotation，以及基本監控。</p></section><section><h2>Telegram AI Agent 入門模板：常見問題與踩雷清單</h2>
-<h3>常見坑</h3>
-<ul>
-<li>Bot token 不要 commit 到 GitHub，永遠放 .env 或部署平台 secrets。</li>
-<li>ALLOWED_USER_IDS 空白代表不限制使用者，公開部署前一定要確認。</li>
-<li>Telegram webhook 需要 HTTPS，本機測試建議先用 polling。</li>
-<li>LLM 回覆可能超過 Telegram 長度限制，程式已截斷到約 3900 字，但實務上仍建議摘要。</li>
-<li>claude-cli / gemini-cli 要先在伺服器上登入與測試。</li>
-</ul>
+<p>每一條都附真實 / 預期的症狀，方便對照。</p>
+<h3>1. 不在 ALLOWED_USER_IDS → 收到 Not allowed.</h3>
+<p>allow-list 非空時，沒列進去的 user id 一律被擋。實測（一個 allowed、一個非 allowed）：</p>
+<pre><code>-&gt; chat 500: 'Echo: what time is it'      # 白名單內，正常回覆
+-&gt; chat 500: '2026-06-02T03:30:27+08:00'  # /tool time 正常
+-&gt; chat 999: 'Not allowed.'               # 不在白名單，被擋</code></pre>
+<p>修法：用 <code>@userinfobot</code> 查到正確 id 加進 <code>ALLOWED_USER_IDS</code>。反向陷阱：留空代表<strong>不限制任何人</strong>，公開部署前一定要填。</p>
+<h3>2. polling 遇到壞回應 → 已容錯，不會崩</h3>
+<p>現在 <code>app/polling.py</code> 遇到 429 或非 JSON body 會退避重試。實測（餵 429 再餵非 JSON body）：</p>
+<pre><code>[server returned] HTTP 429 (rate limited)
+[server returned] HTTP 200 with non-JSON body '&lt;html&gt;not json&lt;/html&gt;'
+[polling] getUpdates failed: JSONDecodeError('Expecting value: line 1 column 1 (char 0)'); retrying...
+[demo result] loop survived both bad responses and kept polling</code></pre>
+<p>偶發 retrying 是正常退避；若一直重試，查 token 與到 api.telegram.org 的網路。</p>
+<h3>3. webhook 沒回應 → 多半是不是 HTTPS / 沒設對</h3>
+<p>Telegram webhook 只接受公開 HTTPS。先確認 <code>setWebhook</code> 回 <code>{"ok":true}</code>，用 <code>getWebhookInfo</code> 看 last_error_message。同時跑 webhook 和 polling 會互搶 update，切回 polling 前先 <code>deleteWebhook</code>。</p>
+<h3>4. 選錯 provider → agent 不會呼叫工具</h3>
+<p>echo / claude-cli / gemini-cli 都是純對話、不送 tools=；只有 <code>http</code> 會 tool-calling。把 <code>.env</code> 改成 <code>AI_PROVIDER=http</code> 並設好 endpoint / key / model。加了新工具卻沒被呼叫？檢查 schema 的 name 和 run_tool 分支是否一致，不一致會掉進 <code>Unknown tool:</code>。</p>
+<h3>5. token 外洩 / 沒載入</h3>
+<p>不要 commit <code>TELEGRAM_BOT_TOKEN</code>（<code>.gitignore</code> 已含 .env）。沒載入時 token 會是空字串、呼叫 Telegram API 會 401。</p>
+<h3>6. 回覆太長被截斷</h3>
+<p>程式已截到約 3900 字（<code>reply[:3900]</code>），實務上建議在工具 / prompt 端做摘要。</p>
 <h3>Debug 順序</h3>
 <ol>
-<li>先確認服務有沒有啟動。</li>
-<li>再確認 endpoint / webhook URL 是否正確。</li>
-<li>檢查環境變數是否有載入。</li>
-<li>用 echo / fake provider 排除 AI 服務問題。</li>
-<li>查看完整錯誤訊息，不要只看最後一行。</li>
-<li>把問題縮到最小可重現案例。</li>
-</ol>
-<h3>問別人前準備</h3>
-<ul>
-<li>repo / branch</li>
-<li>啟動指令</li>
-<li>完整錯誤訊息</li>
-<li>你已經檢查過哪些設定</li>
-<li>secret 請遮掉，不要直接貼 token</li>
-</ul></section><section><h2>Telegram AI Agent 入門模板：改成你的使用場景</h2>
+<li>服務有沒有啟動（curl /health 是否回 {"ok":true}）。</li>
+<li>endpoint / webhook URL 是否正確（getWebhookInfo）。</li>
+<li>環境變數是否載入。</li>
+<li>用 echo provider 排除 LLM 那一側問題。</li>
+<li>看完整錯誤訊息，不要只看最後一行。</li>
+<li>縮到最小可重現案例。</li>
+</ol></section><section><h2>Telegram AI Agent 入門模板：改成你的使用場景</h2>
 <h3>可延伸方向</h3>
 <ul>
 <li>新增 /tool 指令：在 app/tools.py 加入自己的工具邏輯。</li>
@@ -216,4 +270,15 @@ curl http://127.0.0.1:8000/health
 <li>GitHub repo：https://github.com/yazelin/telegram-ai-agent-starter</li>
 <li>Email：yaze.lin.j303@gmail.com</li>
 </ul>
-<p>建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。</p></section></main><section id="contact"><h2>需要手把手協助？</h2><p>公開文件適合照著跑；工作坊與顧問適合處理你的真實環境、debug、部署、權限與客製化改造。</p><p><a class="btn primary" href="https://yazelin.github.io/telegram-ai-agent-starter/#waitlist">留下 email / 收到開課通知</a></p></section><p class="footer">© Yaze Lin. 教學內容公開於 GitHub，歡迎 fork、star、照著做。</p></div></body></html>
+<p>建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。</p></section></main><section id="resources"><h2>關於作者 / 延伸資源</h2>
+<p>這個範本由 <strong>林亞澤（Yaze Lin）</strong> 維護 — 出身機電自動化系統整合，現在把同一套工程方法用在 AI 產品上。任職於 <strong>擎添工業 ChingTech</strong>（1984 年成立的機電自動化公司：PLC 程式、機械手臂、AGV 無人搬運、半導體封測／PCB／面板／光學產線整合）。</p>
+<p>技術筆記與更多範例：<a href="https://yazelin.github.io">yazelin.github.io</a> · GitHub <a href="https://github.com/yazelin">@yazelin</a></p>
+<h3>從範本到正式產品</h3>
+<p>把「會自己呼叫工具的 agent」做到正式產品這條線，我們做成了 AgentOS 與 Mori Desktop。如果你想看同樣的想法做成正式、上線中的產品：</p>
+<ul>
+<li><strong>CTOS</strong> — 企業 AI 工作平台：macOS 風格 Web 桌面、知識庫 RAG 檢索、產業專屬 Agent、LINE Bot 整合，資料留在台灣。<a href="https://ching-tech.com">ching-tech.com</a> · <a href="https://ching-tech.github.io">品牌站</a></li>
+<li><strong>CTOS-Lite / CT JINN</strong> — 把公司裝進 LINE 的個人版 AI 助理，加 LINE 即可試用：<a href="https://line.me/R/ti/p/@285fjkky">@285fjkky</a></li>
+<li><strong>Mori Desktop</strong> — 個人 AI 管家桌面應用（Tauri 2 + Rust + React）：<a href="https://github.com/yazelin/mori-desktop">github.com/yazelin/mori-desktop</a></li>
+<li><strong>AgentOS</strong> — 跨 CLI 的 agent 治理平台（開發中）</li>
+</ul>
+<p class="muted">想把這個範本落地成你公司的內部系統，或想上一堂從 0 到部署的課？來信 yaze.lin.j303@gmail.com，或追蹤上面的連結。</p></section><section id="contact"><h2>需要手把手協助？</h2><p>公開文件適合照著跑；工作坊與顧問適合處理你的真實環境、debug、部署、權限與客製化改造。</p><p><a class="btn primary" href="https://yazelin.github.io/telegram-ai-agent-starter/#waitlist">留下 email / 收到開課通知</a></p></section><p class="footer">© Yaze Lin. 教學內容公開於 GitHub，歡迎 fork、star、照著做。</p></div></body></html>
