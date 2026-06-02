@@ -24,7 +24,7 @@
 
 - GitHub Pages：https://yazelin.github.io/telegram-ai-agent-starter/
 - GitHub repo：https://github.com/yazelin/telegram-ai-agent-starter
-- Email：yaze.lin.j303@gmail.com
+- Email：yazelin@ching-tech.com
 
 建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。
 
