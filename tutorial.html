@@ -28,24 +28,38 @@
 <p>這一段帶你「不靠任何 token」就把程式跑起來、看到真實輸出，最後再說明需要 Telegram / LLM 金鑰才能做的那幾步（會明確標註<strong>需金鑰</strong>）。</p>
 <h3>前置需求</h3>
 <ul>
-<li>Python 3.10+（本文用 3.12.3 實測）</li>
-<li>Git、終端機</li>
+<li>Python 3.10+（uv 會自動準備；本文用 uv 取得的 CPython 3.11.13 實測）</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a>（取代 venv + pip）、Git、終端機</li>
 <li>想接真實 Telegram / LLM 時，才需要對應帳號與 API key。</li>
 </ul>
+<h3>安裝 uv（一次就好）</h3>
+<p>Ubuntu / macOS：</p>
+<pre><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+<p>Windows（PowerShell）：</p>
+<pre><code>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
+<p>裝完重開終端機，<code>uv --version</code> 印得出版本就 OK。</p>
 <h3>第一步：安裝（不需任何 token）</h3>
 <pre><code>git clone https://github.com/yazelin/telegram-ai-agent-starter.git
 cd telegram-ai-agent-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 cp .env.example .env</code></pre>
-<p>成功的話 <code>pip install</code> 最後一行會是 <code>Successfully installed ... fastapi-0.115.6 ... uvicorn-0.34.0 ...</code>，沒有紅色 ERROR。</p>
+<p><code>uv sync</code> 會依 <code>pyproject.toml</code> + <code>uv.lock</code> 自動建立 <code>.venv</code> 並裝好套件（毋須手動 venv/activate）。<strong>以上 <code>uv sync</code> 在 Ubuntu 與 Windows 完全相同。</strong> 真實輸出：</p>
+<pre><code>Using CPython 3.11.13
+Creating virtual environment at: .venv
+Resolved 24 packages in 37ms
+Installed 21 packages in 5ms
+ + fastapi==0.115.6
+ + httpx==0.28.1
+ + python-dotenv==1.0.1
+ + uvicorn==0.34.0
+ ...</code></pre>
 <h3>第二步：啟動服務並做健康檢查（不需任何 token）</h3>
-<pre><code>uvicorn app.main:app --host 127.0.0.1 --port 8000</code></pre>
+<p><code>uv run</code> 直接在 <code>.venv</code> 裡執行，毋須先 activate：</p>
+<pre><code>uv run uvicorn app.main:app --reload --port 8000</code></pre>
 <p>啟動成功會看到：</p>
-<pre><code>INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)</code></pre>
-<p>另開終端機打健康檢查：</p>
+<pre><code>INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Application startup complete.</code></pre>
+<p>另開終端機打健康檢查（Windows PowerShell 的 <code>curl</code> 是 Invoke-WebRequest 別名，建議用 <code>curl.exe</code> 或 <code>Invoke-RestMethod</code>）：</p>
 <pre><code>curl http://127.0.0.1:8000/health</code></pre>
 <p>真實輸出：</p>
 <pre><code>{"ok":true}</code></pre>
@@ -78,13 +92,13 @@ run_tool help: 'Try /ask your question or /tool time'</code></pre>
 <li>跟 <code>@BotFather</code> 申請 bot：傳 <code>/newbot</code> 取名，拿到 <code>TELEGRAM_BOT_TOKEN</code>。</li>
 <li>用 <code>@userinfobot</code> 查到自己的數字 user id。</li>
 <li>填進 <code>.env</code> 的 <code>TELEGRAM_BOT_TOKEN</code> 與 <code>ALLOWED_USER_IDS</code>（allow-list，只有列入者能用，其他人收到 <code>Not allowed.</code>）。</li>
-<li>本機用 polling 啟動（不需公開網址）：<code>python -m app.polling</code>。設好 token 後對 bot 傳 <code>/ask hello</code> 會回 <code>Echo: hello</code>。（此步需真實 token，未貼造假輸出。）</li>
+<li>本機用 polling 啟動（不需公開網址）：<code>uv run python -m app.polling</code>。設好 token 後對 bot 傳 <code>/ask hello</code> 會回 <code>Echo: hello</code>。（此步需真實 token，未貼造假輸出。）</li>
 </ol>
 <h3>第五步：部署後切換 webhook（需金鑰 + 公開 HTTPS）</h3>
 <p>webhook 需要對外 HTTPS 網址，部署後用 <code>setWebhook</code> 告訴 Telegram，詳見部署筆記。</p>
 <h3>第一次成功的標準</h3>
 <ul>
-<li><code>pip install</code> 無 ERROR。</li>
+<li><code>uv sync</code> 無 error。</li>
 <li><code>curl /health</code> 回 <code>{"ok":true}</code>。</li>
 <li>echo driver 印出 <code>Echo: ...</code> 與 time 工具的時間字串。</li>
 <li><code>TELEGRAM_BOT_TOKEN</code> 在 <code>.env</code> 裡、沒有 commit 到 GitHub。</li>
@@ -99,7 +113,7 @@ run_tool help: 'Try /ask your question or /tool time'</code></pre>
 </ul>
 <h3>資料流</h3>
 <ol>
-<li>Telegram 送訊息進來：webhook（POST /webhook/telegram）或本機 polling（python -m app.polling，getUpdates + offset）。</li>
+<li>Telegram 送訊息進來：webhook（POST /webhook/telegram）或本機 polling（uv run python -m app.polling，getUpdates + offset）。</li>
 <li>handle_update 解析 update、做 allow-list 權限檢查。</li>
 <li>/tool 指令直接呼叫 run_tool；其餘文字交給 ask_ai 依 AI_PROVIDER 路由。</li>
 <li>http 模式會把對話加上 tools=TOOL_SCHEMAS 送出，若回傳 tool_calls 就執行工具、把結果以 role:"tool" 接回去，最多迴圈 4 次直到產生最終文字（其他 provider 為純 chat）。</li>
@@ -171,7 +185,8 @@ add missing: 'add needs numeric arguments a and b'</code></pre>
 <li>外部服務 token 已放在部署平台 secrets。</li>
 </ul>
 <h3>啟動指令</h3>
-<pre><code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code></pre>
+<pre><code>uv sync --frozen
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000</code></pre>
 <h3>設定 webhook</h3>
 <p>部署到有公開 HTTPS 網址後，告訴 Telegram 把 update 推到 <code>/webhook/telegram</code>：</p>
 <pre><code>curl -F "url=https://YOUR_DOMAIN/webhook/telegram" \

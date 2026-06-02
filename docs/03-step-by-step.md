@@ -6,7 +6,7 @@
 
 1. 先用 `AI_PROVIDER=echo` 確認對話邏輯正常（見 `01-quickstart.md` 第三步，已實測 `Echo: ...`）。
 2. 確認自己的 Telegram user id 已放進 `ALLOWED_USER_IDS`（allow-list）。
-3. 用 `python -m app.polling` 測本機互動，避免一開始就處理 webhook HTTPS。
+3. 用 `uv run python -m app.polling` 測本機互動，避免一開始就處理 webhook HTTPS。
 4. 想要 agent 自己呼叫工具時，改用 `http` provider（本頁重點）。
 5. 部署後把公開網址設成 Telegram webhook（見 `04-deployment.md`）。
 6. 把你常用的腳本 / API 包進 `app/tools.py`，變成自己的工作流助理。
@@ -89,10 +89,10 @@ async def main():
 asyncio.run(main())
 ```
 
-在 repo 根目錄跑：
+在 repo 根目錄跑（`uv run` 會在專案 `.venv` 裡執行）：
 
 ```bash
-PYTHONPATH=. python /tmp/mock_toolloop.py
+PYTHONPATH=. uv run python /tmp/mock_toolloop.py
 ```
 
 真實輸出（**本機模擬，非真實外部 LLM 回應**）：
@@ -165,7 +165,7 @@ if name == "add":
 ### 先單獨驗證工具本身（不需金鑰）
 
 ```bash
-PYTHONPATH=. python -c "
+PYTHONPATH=. uv run python -c "
 import asyncio
 from app.tools import run_tool
 async def main():

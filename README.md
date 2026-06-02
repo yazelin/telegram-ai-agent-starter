@@ -29,7 +29,7 @@ Engineers who want a deployable Telegram AI workflow bot.
 
 ## Features
 
-- FastAPI webhook（`POST /webhook/telegram`）+ polling dev mode（`python -m app.polling`，含錯誤退避）
+- FastAPI webhook（`POST /webhook/telegram`）+ polling dev mode（`uv run python -m app.polling`，含錯誤退避）
 - 四種 `AI_PROVIDER`：`echo`（離線純對話）/ `claude-cli` / `gemini-cli`（純對話）/ `http`（OpenAI-compatible）
 - **真正的 tool-calling agent 迴圈（僅 `http` 模式）**：把 `tools=` 送給 LLM，模型自己決定呼叫 `app/tools.py` 的工具，結果接回對話再產生最終答案；其他三種 provider 為純 chat
 - 手動 `/tool time` 指令隨時可用；Allow-list user IDs 擋陌生人
@@ -37,13 +37,39 @@ Engineers who want a deployable Telegram AI workflow bot.
 
 ## Quick start
 
+本專案用 [uv](https://docs.astral.sh/uv/) 管理依賴與虛擬環境（取代 venv + pip）。
+
+安裝 uv（一次就好）：
+
+- Ubuntu / macOS：
+
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+- Windows（PowerShell）：
+
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
+
+裝完重開終端機，`uv --version` 印得出版本就 OK。
+
+取得專案、裝依賴、跑起來：
+
 ```bash
 git clone https://github.com/yazelin/telegram-ai-agent-starter.git
 cd telegram-ai-agent-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt  # if present
+uv sync
+cp .env.example .env
+uv run uvicorn app.main:app --reload --port 8000
 ```
+
+`uv sync` 會依 `pyproject.toml` + `uv.lock` 自動建立 `.venv` 並裝好套件（毋須手動 venv/activate）；`uv run` 直接在那個環境裡執行。**以上 `uv sync` / `uv run` 在 Ubuntu 與 Windows 完全相同。** 加新套件用 `uv add <套件>`。
+
+本機 polling 開發模式（不需公開網址）：`uv run python -m app.polling`。
+
+（沒裝 uv 的話 `pip install .` 也能裝，但本教學以 uv 為主。）
 
 See the source files and `.env.example` for the minimal runnable path.
 

@@ -4,50 +4,73 @@
 
 ## 前置需求
 
-- Python 3.10+（本文用 3.12.3 實測）
+- Python 3.10+（uv 會自動準備，不需自己先裝；本文用 uv 取得的 CPython 3.11.13 實測）
+- [uv](https://docs.astral.sh/uv/)（取代 venv + pip）
 - Git
 - 可以使用終端機
 - 想接真實 Telegram / LLM 時，才需要對應帳號與 API key（後面標 **需金鑰** 的步驟）
+
+### 安裝 uv（一次就好）
+
+Ubuntu / macOS：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Windows（PowerShell）：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+裝完重開終端機，`uv --version` 印得出版本就 OK。
 
 ## 第一步：安裝（不需任何 token）
 
 ```bash
 git clone https://github.com/yazelin/telegram-ai-agent-starter.git
 cd telegram-ai-agent-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 cp .env.example .env
 ```
 
-`pip install` 跑完最後一行會看到類似：
+`uv sync` 會依 `pyproject.toml` + `uv.lock` 自動建立 `.venv` 並裝好套件（毋須手動 venv/activate）。**以上 `uv sync` 在 Ubuntu 與 Windows 完全相同。** 真實輸出：
 
 ```
-Successfully installed annotated-types-0.7.0 anyio-4.13.0 certifi-2026.5.20 click-8.4.1
-fastapi-0.115.6 h11-0.16.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 idna-3.17
-pydantic-2.13.4 ... starlette-0.41.3 uvicorn-0.34.0 ...
+Using CPython 3.11.13
+Creating virtual environment at: .venv
+Resolved 24 packages in 37ms
+Installed 21 packages in 5ms
+ + fastapi==0.115.6
+ + httpx==0.28.1
+ + python-dotenv==1.0.1
+ + uvicorn==0.34.0
+ ...
 ```
 
-成功的話你會看到：最後一行是 `Successfully installed ... fastapi-0.115.6 ... uvicorn-0.34.0 ...`，沒有紅色 ERROR。
+成功的話你會看到 `Resolved ... packages` 與 `Installed ... packages`，沒有紅色 error。
 
 ## 第二步：啟動服務並做健康檢查（不需任何 token）
 
-開一個終端機啟動 FastAPI：
+開一個終端機啟動 FastAPI（`uv run` 直接在 `.venv` 裡執行，毋須先 activate）：
 
 ```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 你會看到：
 
 ```
-INFO:     Started server process [791496]
+INFO:     Will watch for changes in these directories: ['.../telegram-ai-agent-starter']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process using WatchFiles
+INFO:     Started server process
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 
-另開一個終端機打健康檢查：
+另開一個終端機打健康檢查（Windows PowerShell 的 `curl` 是 Invoke-WebRequest 別名，建議用 `curl.exe` 或 `Invoke-RestMethod`）：
 
 ```bash
 curl http://127.0.0.1:8000/health
@@ -80,10 +103,10 @@ async def main():
 asyncio.run(main())
 ```
 
-在 repo 根目錄跑（`AI_PROVIDER=echo` 是預設值，這裡顯式寫出來）：
+在 repo 根目錄跑（`AI_PROVIDER=echo` 是預設值，這裡顯式寫出來；`uv run` 確保在專案 `.venv` 裡執行，`PYTHONPATH=.` 讓 `app` 套件可被 import）：
 
 ```bash
-AI_PROVIDER=echo python /tmp/try_echo.py
+PYTHONPATH=. AI_PROVIDER=echo uv run python /tmp/try_echo.py
 ```
 
 真實輸出：
@@ -128,7 +151,7 @@ run_tool help: 'Try /ask your question or /tool time'
 4. **本機用 polling 模式啟動**（不需公開網址）：
 
    ```bash
-   python -m app.polling
+   uv run python -m app.polling
    ```
 
    設好 token 後，你在 Telegram 對你的 bot 傳 `/ask hello`，會看到它回 `Echo: hello`。
@@ -140,7 +163,7 @@ webhook 模式需要一個對外的 HTTPS 網址。部署完之後告訴 Telegra
 
 ## 第一次成功的標準
 
-- `pip install` 無 ERROR。
-- `uvicorn` 啟動後 `curl /health` 回 `{"ok":true}`。
+- `uv sync` 無 error（看到 `Installed ... packages`）。
+- `uv run uvicorn ...` 啟動後 `curl /health` 回 `{"ok":true}`。
 - echo driver 印出 `Echo: ...` 與 `time` 工具的時間字串。
 - 你的 `TELEGRAM_BOT_TOKEN` 在 `.env` 裡、**沒有** commit 到 GitHub（`.gitignore` 已含 `.env`）。
