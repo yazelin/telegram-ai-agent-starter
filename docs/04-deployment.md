@@ -11,8 +11,10 @@
 ## 啟動指令
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+部署機上先 `uv sync --frozen` 依 `uv.lock` 裝好依賴，再用上面的指令啟動。`uv sync` / `uv run` 在 Ubuntu 與 Windows 完全相同。
 
 ## 設定 webhook
 
@@ -32,7 +34,7 @@ curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/deleteWebhook"
 ## Webhook vs Polling
 
 - **Webhook（正式部署）**：Telegram 主動把 update POST 到 `/webhook/telegram`（app/main.py）。需要公開 HTTPS 網址，省資源、低延遲。設定完 webhook 後 **不要**同時跑 polling，否則會搶 update。
-- **Polling（本機開發）**：`python -m app.polling` 用 getUpdates + offset 主動拉，不需公開網址，適合本機 debug。切到 polling 前記得先 `deleteWebhook`。
+- **Polling（本機開發）**：`uv run python -m app.polling` 用 getUpdates + offset 主動拉，不需公開網址，適合本機 debug。切到 polling 前記得先 `deleteWebhook`。
 
 ## 常見部署選項
 

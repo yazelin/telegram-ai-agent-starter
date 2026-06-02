@@ -55,6 +55,13 @@
 
 LLM 可能回超過 Telegram 單則訊息上限的內容。程式已截到約 3900 字（`reply[:3900]`），但實務上建議在工具 / prompt 端就做摘要，而不是硬截。
 
+## 7. uv 沒裝 / 忘了 uv sync → 指令找不到或 ImportError
+
+- 症狀：`uv: command not found`，或 `uv run` 報 `ModuleNotFoundError: No module named 'fastapi'`。
+- 原因：沒裝 uv，或 clone 後還沒跑 `uv sync` 建好 `.venv`。
+- 修法：先依 `01-quickstart.md` 裝 uv（Ubuntu/macOS 用 `curl -LsSf https://astral.sh/uv/install.sh | sh`，Windows 用 PowerShell 那條），裝完重開終端機確認 `uv --version`；再在 repo 根目錄跑一次 `uv sync`。之後所有指令都用 `uv run ...` 開頭，毋須手動 venv/activate。
+- 延伸：直接打 `uvicorn ...` / `python -m app.polling`（沒有 `uv run` 前綴）會用到系統 Python 而非專案 `.venv`，常見就是這樣噴 ImportError。
+
 ## Debug 順序
 
 1. 服務有沒有啟動（`curl /health` 是否回 `{"ok":true}`）。
