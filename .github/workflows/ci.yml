@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        track: [base, pydantic]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # base track: no extra, hand-rolled agent + shared tools
+      - name: Sync (base)
+        if: matrix.track == 'base'
+        run: uv sync
+      - name: Tool-logic smoke
+        if: matrix.track == 'base'
+        run: PYTHONPATH=. uv run python tools_smoke_test.py
+
+      # pydantic track: installs the extra, runs the framework wiring smoke
+      - name: Sync with pydantic extra
+        if: matrix.track == 'pydantic'
+        run: uv sync --extra pydantic
+      - name: PydanticAI agent wiring smoke
+        if: matrix.track == 'pydantic'
+        run: PYTHONPATH=. uv run python agent_smoke_test_pydantic.py
