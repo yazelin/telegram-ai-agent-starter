@@ -22,6 +22,7 @@ Build a Telegram AI assistant that can call LLMs and tools.
 - Markdown 教學：[`docs/`](docs/)
 - 快速開始：[`docs/01-quickstart.md`](docs/01-quickstart.md)
 - 常見踩雷：[`docs/05-common-pitfalls.md`](docs/05-common-pitfalls.md)
+- 後半段(PydanticAI 對照組):docs/08-pydantic-ai-agent.md
 
 ## Who this is for
 
@@ -34,6 +35,7 @@ Engineers who want a deployable Telegram AI workflow bot.
 - **真正的 tool-calling agent 迴圈（僅 `http` 模式）**：把 `tools=` 送給 LLM，模型自己決定呼叫 `app/tools.py` 的工具，結果接回對話再產生最終答案；其他三種 provider 為純 chat
 - 手動 `/tool time` 指令隨時可用；Allow-list user IDs 擋陌生人
 - Docker-ready starter for workshops
+- PydanticAI agent 版同功能重寫(optional `pydantic` extra)— 見 `docs/08-pydantic-ai-agent.md`
 
 ## Quick start
 
@@ -72,6 +74,15 @@ uv run uvicorn app.main:app --reload --port 8000
 （沒裝 uv 的話 `pip install .` 也能裝，但本教學以 uv 為主。）
 
 See the source files and `.env.example` for the minimal runnable path.
+
+### 後半段:PydanticAI agent 版(對照組)
+
+```bash
+uv sync --extra pydantic
+PYTHONPATH=. uv run python agent_smoke_test_pydantic.py   # 框架接線 smoke(免 API key)
+# .env 設 AI_PROVIDER=pydantic 後:
+uv run uvicorn app.main:app                               # bot 改用 PydanticAI agent
+```
 
 ## Learn / get help
 

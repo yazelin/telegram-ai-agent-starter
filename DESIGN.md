@@ -29,6 +29,7 @@
 - HTTP（OpenAI-compatible）模式內建 function-calling 迴圈：agent 會自己呼叫工具並把結果接回對話；其他 provider 為純 chat
 - Telegram 使用者 allow-list，避免陌生人亂用
 - 內建 /ask 與手動 /tool 範例，適合延伸成個人助理
+- 內建 PydanticAI agent 對照組(後半段 `docs/08`):同工具邏輯把手刻 tool-loop 用框架重寫,加工具一行 decorator
 
 ## Assets
 
