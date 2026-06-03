@@ -2,7 +2,8 @@
 """Framework wiring smoke for the PydanticAI agent (pydantic-only; needs the
 `pydantic` extra). Uses PydanticAI's TestModel/FunctionModel — no real LLM, no
 API key, deterministic. Asserts the agent registers the tools and actually
-invokes them (delegating to the shared run_tool), plus the multiply bonus.
+invokes them: add/time/help delegate to the shared run_tool; multiply is the
+framework-only bonus (inline body, intentionally not in run_tool).
 Exits non-zero on failure so CI can gate on it."""
 import json, sys
 from app.agent_pydantic import agent

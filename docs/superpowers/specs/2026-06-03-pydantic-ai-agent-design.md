@@ -19,7 +19,7 @@ mcp/linebot 用真傳輸+本地假 server 證明 parity;company-ai 用確定性 
 ## 3. 已驗證的技術事實(實測)
 
 - **pydantic-ai 1.105.0**;`Agent` + `@agent.tool_plain` 註冊工具。
-- `TestModel()`:`agent.run_sync('hi', model=TestModel())` 自動以 dummy 參數呼叫**所有**註冊工具,回 JSON 摘要(實測 `{"add":"0.0","now":"TIME"}`)——證明工具被框架觸發,免 API key。
+- `TestModel()`:`agent.run_sync('hi', model=TestModel())` 自動以 dummy 參數呼叫**所有**註冊工具,回 JSON 摘要(出貨版工具為 time/help/add/multiply,形如 `{"add":"0.0","time":"<ISO>","help":"...","multiply":"0.0"}`)——證明工具被框架觸發,免 API key。
 - `FunctionModel(fn)`:可腳本化「先回 `ToolCallPart(add, {a:19,b:23})` → 框架執行 add → 再回 `TextPart`」,實測最終 output = `The sum is 42.0`,add 確實被執行。
 - 完整 `pydantic-ai` 會拉 147 個套件(含 botocore/temporalio/mistralai/grpcio 等)→ 太肥;改用 **`pydantic-ai-slim[openai]`**(只帶 OpenAI provider;`TestModel`/`FunctionModel` 在 slim core)。實際 import 面與 slim 是否含 Test/FunctionModel + OpenAIModel,於 writing-plans 前 scratch 再確認;smoke test 為最終防線。
 
@@ -40,7 +40,7 @@ mcp/linebot 用真傳輸+本地假 server 證明 parity;company-ai 用確定性 
 ### 程式碼
 - **`app/agent_pydantic.py`(新)**:
   - 建 `Agent`(system prompt);`@agent.tool_plain` 註冊 `time` / `help` / `add`,每個是 typed wrapper 呼叫 `from .tools import run_tool`。
-  - `run_pydantic_agent(message) -> str`:用 `OpenAIModel`(base_url 由 `HTTP_LLM_ENDPOINT` 推導、api_key 由 `HTTP_LLM_API_KEY`)`await agent.run(message)` 回 `.output`。lazy 載入框架。
+  - `run_pydantic_agent(message) -> str`:用 `OpenAIChatModel`(base_url 由 `HTTP_LLM_ENDPOINT` 推導、api_key 由 `HTTP_LLM_API_KEY`)`await agent.run(message)` 回 `.output`。lazy 載入框架。
   - 紅利:多一個 `multiply` 工具(一個 decorator,自帶 body),示範「加工具一行」。
 - **`app/agent.py`(改)**:`ask_ai` 加 `if config.AI_PROVIDER == "pydantic": from .agent_pydantic import run_pydantic_agent; return await run_pydantic_agent(message)`(lazy import,base 匯入鏈不碰框架)。
 - **`pyproject.toml`(改)**:`[project.optional-dependencies] pydantic = ["pydantic-ai-slim[openai]>=1,<2"]`;`[tool.uv] package = false` 不變。
@@ -51,7 +51,7 @@ mcp/linebot 用真傳輸+本地假 server 證明 parity;company-ai 用確定性 
 - **`agent_smoke_test_pydantic.py`(新,pydantic extra)**:
   - `FunctionModel` 腳本叫 `add(19,23)` → 斷言 agent 觸發 add、最終 output 反映之。
   - `TestModel` → 斷言 `time`/`help`/`add` 三工具都註冊且被叫。
-  - 紅利:`FunctionModel` 腳本叫 `multiply(6,7)` → 斷言 `"42.0"` 且 multiply 有註冊。
+  - 紅利:`FunctionModel` 腳本叫 `multiply(6,8)` → 斷言 `"48.0"` 且 multiply 有註冊。
 - **`.github/workflows/ci.yml`(新)**:matrix:`base`(base 相依,跑 tools smoke)/ `pydantic`(`uv sync --extra pydantic`,跑 agent smoke)。
 
 ### 文件
