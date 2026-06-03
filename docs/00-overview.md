@@ -2,6 +2,15 @@
 
 從一個 bot token 開始，做出會回覆、會呼叫工具、可部署的 AI Agent。
 
+## 兩軌:先手刻、再框架
+
+這份教材分兩段:
+
+- **前半段(`01`、`03`)** — 從零手刻 OpenAI tool-calling 迴圈,看懂 agent 怎麼讀 `tool_calls`、跑工具、把結果接回對話。
+- **後半段(`08`)** — 用 **PydanticAI** agent 框架重寫同樣的 agent 當對照組,體會「框架把迴圈、工具 dispatch、schema 全包掉」,而工具邏輯(`run_tool`)兩版共用。
+
+先手刻看懂 tool-loop,再用框架拿生產力 —— 你會清楚知道框架替你做了什麼、又沒替你做什麼(你的工具邏輯永遠是你自己的)。
+
 ## 適合誰
 
 想把 Telegram 變成 AI 工作入口的台灣工程師、接案者與小團隊。
@@ -21,6 +30,7 @@
 4. 準備部署時看 `04-deployment.md`。
 5. 卡住時先查 `05-common-pitfalls.md`。
 6. 想改成自己的場景，看 `06-customize-for-your-use-case.md`。
+7. 後半段對照組:看 `08-pydantic-ai-agent.md`(用 PydanticAI 重寫 agent 的對照組)。
 
 ## 免費與付費怎麼分
 
