@@ -14,6 +14,11 @@ async def ask_ai(message: str) -> str:
         return await run_cli(["gemini", "-p", message])
     if config.AI_PROVIDER == "http":
         return await run_http_agent(message)
+    if config.AI_PROVIDER == "pydantic":
+        # Part 2: the PydanticAI agent. Lazy import so base (non-pydantic)
+        # installs never require pydantic-ai.
+        from .agent_pydantic import run_pydantic_agent
+        return await run_pydantic_agent(message)
     return "Unsupported AI_PROVIDER"
 
 
